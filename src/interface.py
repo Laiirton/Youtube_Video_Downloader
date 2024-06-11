@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QFileDialog
-from PySide6.QtCore import QThread, Signal, Slot
+# Main window related imports
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QFileDialog
+from PySide6.QtCore import Slot
 from download import DownloadThread
 
 class MainWindow(QMainWindow):
@@ -38,7 +39,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def start_download(self):
         url = self.url_input.text()
-        self.thread = DownloadThread(url, self)
+        self.thread = DownloadThread(url, self.download_directory)
         self.thread.progress_signal.connect(self.progress_bar.setValue)
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
