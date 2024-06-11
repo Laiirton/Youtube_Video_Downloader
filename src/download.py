@@ -1,27 +1,27 @@
-from PyQt5.QtCore import QThread, pyqtSignal
-from pytube import YouTube
+from PySide6.QtCore import QThread, Signal
+import yt_dlp
 
 
 class DownloadThread(QThread):
-    progress_signal = pyqtSignal(int)
-
-    def __init__(self, url):
-        super().__init__()
+    progress_signal = Signal(int)
+    
+    def __init__(self, url, parent=None):
+        super().__init__(parent)
         self.url = url
 
+        
     def run(self):
         try:
-            yt = YouTube(self.url)
-            stream = yt.streams.get_highest_resolution()
-            stream.download()
-
-            # Atualizando a barra de progresso
-            total_size = stream.filesize
-            bytes_downloaded = 0
-            for data in stream.stream_to_buffer():
-                bytes_downloaded += len(data)
-                progress = int(100 * bytes_downloaded / total_size)
-                self.progress_signal.emit(progress)
-
+            ytdl_opts = {}
+            if self.parent.download_directory:
+                ytdl_opts['outtmpl'] = f'{self.parent.download_directory}/%(title)s.%(ext)s'
+                
+            with yt_dlp.YoutubeDL(ytdl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=True)
+                file_size = info.get('requested_downloads')[0]['total_bytes']
+                
+                progress_hooks = [self.update_progress(file_size)]
+                ydl.add_progress_hook(progress_hooks)
+                
         except Exception as e:
-            print(f"Erro no download: {e}")
+            print(e)
